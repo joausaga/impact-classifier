@@ -27,7 +27,9 @@ def sentence_to_words(sentence, steeming=False, lemmatization=False):
     
     """
     # Remove HTML tags
-    text = BeautifulSoup(sentence, "html.parser").get_text()
+    text = BeautifulSoup(sentence, "html.parser").get_text()    
+    # Remove non alphabetic characters and put text to lower case
+    text = re.sub(r"[^a-zA-Z]", " ", text.lower())    
     # Split string into words
     words = word_tokenize(text)
      # Remove stopwords
