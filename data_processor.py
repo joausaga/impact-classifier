@@ -18,7 +18,7 @@ stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 
 
-def sentence_to_words(sentence, steeming=False, lemmatization=False):
+def sentence_to_words(sentence, lemmatization=False):
     """
     Remove any html formatting that may appear in sentence as well as 
     tokenize and remove stop english words.
@@ -34,9 +34,8 @@ def sentence_to_words(sentence, steeming=False, lemmatization=False):
     words = word_tokenize(text)
      # Remove stopwords
     words = [word for word in words if word not in stopwords.words("english")]
-    
-    if steeming:
-        words = [stemmer.stem(word) for word in words]
+    # Apply steeming
+    words = [stemmer.stem(word) for word in words]
     
     if lemmatization:
         words = [lemmatizer.lemmatize(word) for word in words]
@@ -51,22 +50,17 @@ def extract_BoW_features(sentences, max_features=None, transformation='tc', ngra
     
     Supported transformations are:
     - tc: term count
-    - tf: term frequency
     - tfidf: term frequency inverse document frequency
     
     """
     if transformation == 'tc':
         vectorizer = CountVectorizer(max_features=max_features, ngram_range=ngram_range, 
                                      preprocessor=lambda x: x, tokenizer=lambda x: x,
-                                     lowercase=False)
-    elif transformation == 'tf':
-        vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=ngram_range, 
-                                     preprocessor=lambda x: x, tokenizer=lambda x: x,
-                                     use_idf=False, lowercase=False)
+                                     lowercase=False, analyzer='word', token_pattern=r'\w{1,}')    
     elif transformation == 'tfidf':
         vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=ngram_range, 
                                      preprocessor=lambda x: x, tokenizer=lambda x: x,
-                                     lowercase=False)
+                                     lowercase=False, analyzer='word', token_pattern=r'\w{1,}')
     bow_features = vectorizer.fit_transform(sentences).toarray()
     
     return bow_features, vectorizer.vocabulary_
