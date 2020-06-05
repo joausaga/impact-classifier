@@ -11,7 +11,7 @@ echo $(date '+%Y-%m-%d %H:%M:%S')
 module purge
 module load intel
 module load mkl
-module load python/3.6.1
+module load python/3.7.4
 source env/bin/activate
-python python train.py train-model GB './data/train_test/data_tfidf_10000_(1, 3)_clean_lemmatization.pkl' --algorithm_name 'gradient_boosting' --metric 'balanced_accuracy'
+python train.py train-model GB './data/train_test/data_tfidf_10000_(1, 3)_clean_lemmatization.pkl' --algorithm_name 'gradient_boosting' --metric 'balanced_accuracy'
 echo $(date '+%Y-%m-%d %H:%M:%S')
