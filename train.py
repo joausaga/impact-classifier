@@ -5,7 +5,9 @@ import numpy as np
 
 
 from sklearn.model_selection import KFold, RandomizedSearchCV
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from utils import save_model
 
 
@@ -14,6 +16,8 @@ def run():
     pass
 
 
+# Inspired by
+# # https://www.kaggle.com/yassineghouzam/titanic-top-4-with-ensemble-modeling/notebook#Titanic-Top-4%-with-ensemble-modeling
 def define_parameters_gb():
     n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=10)]
     max_features = ['auto', 'sqrt']
@@ -31,6 +35,46 @@ def define_parameters_gb():
                   'max_features': max_features,
                   'min_samples_split': min_samples_split
                  }
+    return param_grid
+
+
+def define_parameters_rf():
+    n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=10)]
+    max_features = ['auto', 'sqrt']
+    max_depth = [int(x) for x in np.linspace(10, 100, num = 10)]
+    max_depth.append(None)
+    min_samples_split = [2, 5, 7, 10]
+    min_samples_leaf = [1, 2, 3]
+    bootstrap = [True, False]
+    param_grid = {
+        'n_estimators': n_estimators,
+        'max_features': max_features,
+        'max_depth': max_depth,
+        'min_samples_split': min_samples_split,
+        'min_samples_leaf': min_samples_leaf,
+        'bootstrap': bootstrap
+    }
+    return param_grid
+
+
+# Inspired by
+# https://chrisalbon.com/machine_learning/model_selection/hyperparameter_tuning_using_grid_search
+def define_parameters_lr():
+    param_grid = {
+        'penalty': ['l1', 'l2'],
+        'C': np.logspace(0, 4, 10)
+    }
+    return param_grid
+
+
+# Ideas taken from 
+# https://towardsdatascience.com/svm-hyper-parameter-tuning-using-gridsearchcv-49c0bc55ce29
+def define_parameters_svm():
+    param_grid = {
+        'C': [0.01, 0.1, 1, 10, 100],
+        'gamma': [1, 0.1, 0.01, 0.001, 'scale'],
+        'kernel': ['linear','rbf', 'poly']
+    }
     return param_grid
 
 
@@ -69,11 +113,20 @@ def train_model(algorithm_acronym, train_data_file, algorithm_name, num_splits,
     kfold = KFold(n_splits=int(num_splits), shuffle=True, random_state=42)
     if algorithm_acronym == 'GB':
         param_grid = define_parameters_gb()
-        best_model = do_hyperparametrization(GradientBoostingClassifier(), 
-                                             param_grid, X_train, y_train, 
-                                             int(num_iter), kfold, metric, -1, 1)
+        classifier = GradientBoostingClassifier()
+    elif algorithm_acronym == 'RF':
+        param_grid = define_parameters_rf()
+        classifier = RandomForestClassifier()
+    elif algorithm_acronym == 'LR':
+        param_grid = define_parameters_lr()
+        classifier = LogisticRegression()
+    elif algorithm_acronym == 'SVM':
+        param_grid = define_parameters_svm()
+        classifier = SVC()
     else:
         raise Exception(f'Unknown algorithm acronym: {algorithm_acronym}')
+    best_model = do_hyperparametrization(classifier, param_grid, X_train, y_train, 
+                                         int(num_iter), kfold, metric, -1, 1)
     save_model(best_model, f'best_{algorithm_name}', algorithm_acronym, 
                metric, train_data_file)
 
