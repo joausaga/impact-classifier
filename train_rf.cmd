@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH--job-name="social-impact-research-model-training"
 #SBATCH--workdir=.
-#SBATCH--output=tp_%j.out
-#SBATCH--error=tp_%j.err
+#SBATCH--output=train_rf_%j.out
+#SBATCH--error=train_rf_%j.err
 #SBATCH--ntasks=1
 #SBATCH--time=24:00:00
 #SBATCH--cpus-per-task=24
