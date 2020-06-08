@@ -75,7 +75,7 @@ def extract_BoW_features(sentences, max_features=None, transformation='tc', ngra
                                      lowercase=False, analyzer='word', token_pattern=r'\w{1,}')
     bow_features = vectorizer.fit_transform(sentences).toarray()
     
-    return bow_features, vectorizer.vocabulary_
+    return bow_features, vectorizer
 
 
 def count_pos_tag(sentence, tag):
