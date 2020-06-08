@@ -89,15 +89,8 @@ def lemmatize_words(words, pos='v'):
 def save_model(model, algorithm_name, algorithm_acronym, metric, data_filename):
     models_dir = 'models'  # directory to store models
     os.makedirs(models_dir, exist_ok=True)  # ensure the directory exists
-    data_fn = data_filename.split('/')[-1]
-    text_processing_tasks = '_'.join(data_fn.split('_')[1:]).split('.')[0]
-    transformation, max_features, ngram_range, processing_tasks = \
-            text_processing_tasks.split('_')[0], \
-            text_processing_tasks.split('_')[1], \
-            text_processing_tasks.split('_')[2], \
-            text_processing_tasks.split('_')[3].split('.')[0]
+    data_fn = data_filename.split('/')[-1]    
     model_name = f'{algorithm_name}.joblib'
     model_file_name = os.path.join(models_dir, model_name)
-    model_dict = dict(model=model, data_fn=data_fn, transformation=transformation, max_features=max_features, 
-                      ngram_range=ngram_range, processing_tasks=processing_tasks)
+    model_dict = dict(model=model, data_fn=data_fn)
     joblib.dump(model_dict, model_file_name)
