@@ -107,7 +107,7 @@ def train_model(algorithm_acronym, train_data_file, algorithm_name, num_splits,
     # get data    
     with open(train_data_file, 'rb') as f:
         data = joblib.load(f)
-    train_data = data['train_data']
+    train_data = data['data']
     y_train = train_data['label'].values
     text_features = list(train_data.iloc[:,0].values)        
     extra_features = np.array(train_data.iloc[:,2:].values)
