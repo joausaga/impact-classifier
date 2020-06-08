@@ -1,10 +1,13 @@
 import click
+import glob
 import joblib
-import pandas as pd
 import numpy as np
+import pandas as pd
+import os
 
-
-from sklearn.model_selection import KFold, RandomizedSearchCV
+from datetime import datetime
+from sklearn.model_selection import KFold, RandomizedSearchCV, cross_val_score
+from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
@@ -129,6 +132,71 @@ def train_model(algorithm_acronym, train_data_file, algorithm_name, num_splits,
                                          int(num_iter), kfold, metric, -1, 1)
     save_model(best_model, f'best_{algorithm_name}', algorithm_acronym, 
                metric, train_data_file)
+
+
+def get_classifier(algorithm_name, random_state):
+    if algorithm_name == 'NB':
+        classifier = GaussianNB()
+    elif algorithm_name == 'SVM':
+        classifier = SVC(random_state=random_state)   
+    elif algorithm_name == 'LR':
+        classifier = LogisticRegression(random_state=random_state)
+    elif algorithm_name == 'RF':        
+        classifier = RandomForestClassifier(random_state=random_state)
+    elif algorithm_name == 'GB':
+        classifier = GradientBoostingClassifier(random_state=random_state)
+    else:
+        print("Unknown algorithm: {0}",format(algorithm_name))
+    return classifier
+
+
+@run.command()
+@click.option('--num_splits', help='Number of cross-validation splits', \
+              default=5, is_flag=False)
+@click.option('--metric', help='Optimization metric', \
+              default='accuracy', is_flag=False)
+def train_models(num_splits, metric):
+    random_state = np.random.RandomState(1234)
+    outputs = []
+    data_path = os.path.join('data', 'train', '*.pkl')    
+    algorithms = ['NB', 'SVM', 'LR', 'RF', 'GB']
+    # Train models
+    kfold = KFold(n_splits=num_splits, shuffle=True, random_state=random_state)
+    files = glob.glob(data_path)            
+    for file in files:
+        with open(file, 'rb') as f:
+            data = joblib.load(f)
+        train_data = data['data']
+        y_train = train_data['label'].values
+        text_features = list(train_data.iloc[:,0].values)        
+        extra_features = np.array(train_data.iloc[:,2:].values)
+        X_train = np.concatenate((text_features, extra_features), axis=1)
+        for algorithm in algorithms:            
+            classifier = get_classifier(algorithm, random_state)                
+            scores = cross_val_score(classifier, X_train, y=y_train, 
+                                     scoring=metric, cv=kfold, n_jobs=-1)
+            outputs.append(
+                {
+                    'algorithm': algorithm,
+                    'train_filename': file,                
+                    'metric_scores': scores,
+                }
+            )
+    # Save results as dataframe
+    output_df = pd.DataFrame(columns=['algorithm', 'train_data_file', 'mean_balanced_accuracy'])
+    for output in outputs:
+        row = {
+            'algorithm': output['algorithm'],
+            'train_data_file': output['train_filename'],
+            'mean_balanced_accuracy': round(output['metric_scores'].mean(), 2),
+            'std_balanced_accuracy': round(output['metric_scores'].std(), 2)
+        }
+        output_df = output_df.append(row, ignore_index=True)    
+    # Save dataframe
+    experiment_dir = 'experiments'
+    os.makedirs(experiment_dir, exist_ok=True)
+    experiment_filename = 'e_{}.csv'.format(datetime.now().strftime('%d%m%Y'))
+    output_df.to_csv(os.path.join(experiment_dir,experiment_filename), index=False)
 
 
 if __name__ == "__main__":
