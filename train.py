@@ -17,7 +17,7 @@ def run():
 
 
 # Inspired by
-# # https://www.kaggle.com/yassineghouzam/titanic-top-4-with-ensemble-modeling/notebook#Titanic-Top-4%-with-ensemble-modeling
+# https://www.kaggle.com/yassineghouzam/titanic-top-4-with-ensemble-modeling/notebook#Titanic-Top-4%-with-ensemble-modeling
 def define_parameters_gb():
     n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=10)]
     max_features = ['auto', 'sqrt']
