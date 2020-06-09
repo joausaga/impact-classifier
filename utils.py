@@ -3,6 +3,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 import joblib
+import json
 import re
 import os
 import unicodedata
@@ -94,3 +95,10 @@ def save_model(model, algorithm_name, algorithm_acronym, metric, data_filename):
     model_file_name = os.path.join(models_dir, model_name)
     model_dict = dict(model=model, data_fn=data_fn)
     joblib.dump(model_dict, model_file_name)
+
+
+# Get configuration from file
+def get_config(config_file):
+    with open(str(config_file), 'r') as f:
+        config = json.loads(f.read())
+    return config
