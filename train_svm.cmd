@@ -13,5 +13,5 @@ module load intel
 module load mkl
 module load python/3.7.4
 source env/bin/activate
-python train.py train-model SVM './data/train_test/data_tfidf_5000_(1, 1)_clean.pkl' --algorithm_name 'support_vector_machine' --metric 'balanced_accuracy'
+python train.py train-model SVM './data/train/data_tc_500_1_ 3_clean.pkl' --algorithm_name 'support_vector_machine' --metric 'balanced_accuracy'
 echo $(date '+%Y-%m-%d %H:%M:%S')
