@@ -1,0 +1,5 @@
+{
+    "model_dir": "models",
+    "model_name": "support-vector-machine.joblib",
+    "data_dir": "data"
+}
