@@ -13,5 +13,5 @@ module load intel
 module load mkl
 module load python/3.7.4
 source env/bin/activate
-python train.py train-model RF './data/train/data_tfidf_10000_1_ 2_clean_lemmatization.pkl' --algorithm_name 'random_forest' --metric 'balanced_accuracy'
+python train.py train-model RF './data/train/data_tc_10000_1_ 3_clean_lemmatization.pkl' --algorithm_name 'random_forest' --metric 'f1'
 echo $(date '+%Y-%m-%d %H:%M:%S')
