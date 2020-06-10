@@ -104,6 +104,12 @@ def do_hyperparametrization(classifier, param_grid, X_train, y_train, n_iter,
               default='accuracy', is_flag=False)
 def train_model(algorithm_acronym, train_data_file, algorithm_name, num_splits, 
                 num_iter, metric):
+    do_train_model(algorithm_acronym, train_data_file, algorithm_name, num_splits, 
+                   num_iter, metric)
+
+
+def do_train_model(algorithm_acronym, train_data_file, algorithm_name, num_splits, 
+                   num_iter, metric):
     # get data    
     with open(train_data_file, 'rb') as f:
         data = joblib.load(f)
@@ -130,7 +136,7 @@ def train_model(algorithm_acronym, train_data_file, algorithm_name, num_splits,
         raise Exception(f'Unknown algorithm acronym: {algorithm_acronym}')
     best_model = do_hyperparametrization(classifier, param_grid, X_train, y_train, 
                                          int(num_iter), kfold, metric, -1, 1)
-    save_model(best_model, f'best_{algorithm_name}', algorithm_acronym, 
+    save_model(best_model, f'best_{algorithm_name}_{metric}', algorithm_acronym, 
                metric, train_data_file)
 
 
@@ -153,13 +159,21 @@ def get_classifier(algorithm_name, random_state):
 @run.command()
 @click.option('--num_splits', help='Number of cross-validation splits', \
               default=5, is_flag=False)
+@click.option('--num_iter', help='Number of iterations', \
+              default=100, is_flag=False)
 @click.option('--metric', help='Optimization metric', \
               default='accuracy', is_flag=False)
-def train_models(num_splits, metric):
+def train_models(num_splits, num_iter, metric):
     random_state = np.random.RandomState(1234)
     outputs = []
     data_path = os.path.join('data', 'train', '*.pkl')    
-    algorithms = ['NB', 'SVM', 'LR', 'RF', 'GB']
+    algorithms = [
+        {'name': 'naive-bayes', 'acronym': 'NB'},
+        {'name': 'support-vector-machine', 'acronym': 'SVM'},
+        {'name': 'logistic-regression', 'acronym': 'LR'},
+        {'name': 'random-forest', 'acronym': 'RF'},
+        {'name': 'gradient-boosting', 'acronym': 'GB'}
+    ]
     # Train models
     kfold = KFold(n_splits=num_splits, shuffle=True, random_state=random_state)
     files = glob.glob(data_path)            
@@ -172,24 +186,24 @@ def train_models(num_splits, metric):
         extra_features = np.array(train_data.iloc[:,2:].values)
         X_train = np.concatenate((text_features, extra_features), axis=1)
         for algorithm in algorithms:            
-            classifier = get_classifier(algorithm, random_state)                
+            classifier = get_classifier(algorithm['acronym'], random_state)                
             scores = cross_val_score(classifier, X_train, y=y_train, 
                                      scoring=metric, cv=kfold, n_jobs=-1)
             outputs.append(
                 {
-                    'algorithm': algorithm,
+                    'algorithm': algorithm['acronym'],
                     'train_filename': file,                
                     'metric_scores': scores,
                 }
             )
     # Save results as dataframe
-    output_df = pd.DataFrame(columns=['algorithm', 'train_data_file', 'mean_balanced_accuracy'])
+    output_df = pd.DataFrame(columns=['algorithm', 'train_data_file', f'mean_{metric}'])
     for output in outputs:
         row = {
             'algorithm': output['algorithm'],
             'train_data_file': output['train_filename'],
-            'mean_balanced_accuracy': round(output['metric_scores'].mean(), 2),
-            'std_balanced_accuracy': round(output['metric_scores'].std(), 2)
+            f'mean_{metric}': round(output['metric_scores'].mean(), 2),
+            f'std_{metric}': round(output['metric_scores'].std(), 2)
         }
         output_df = output_df.append(row, ignore_index=True)    
     # Save dataframe
@@ -197,6 +211,13 @@ def train_models(num_splits, metric):
     os.makedirs(experiment_dir, exist_ok=True)
     experiment_filename = 'e_{}.csv'.format(datetime.now().strftime('%d%m%Y'))
     output_df.to_csv(os.path.join(experiment_dir,experiment_filename), index=False)
+    # Train algorithms on data transformation that work best for each of them
+    for algorithm in algorithms:
+        best_model = output_df[output_df['algorithm']==algorithm['acronym']].\
+            sort_values(by=[f'mean_{metric}', f'std_{metric}'], ascending=False).head(1)
+        train_data_file = best_model['train_data_file'].values[0]
+        do_train_model(algorithm['acronym'], train_data_file, algorithm['name'], 
+                       num_splits, num_iter, metric)
 
 
 if __name__ == "__main__":
