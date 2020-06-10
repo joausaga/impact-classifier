@@ -209,10 +209,12 @@ def train_models(num_splits, num_iter, metric):
     # Save dataframe
     experiment_dir = 'experiments'
     os.makedirs(experiment_dir, exist_ok=True)
-    experiment_filename = 'e_{}.csv'.format(datetime.now().strftime('%d%m%Y'))
+    experiment_filename = 'e_{}.csv'.format(datetime.now().strftime('%d%m%Y_%H%M%S'))
     output_df.to_csv(os.path.join(experiment_dir,experiment_filename), index=False)
     # Train algorithms on data transformation that work best for each of them
     for algorithm in algorithms:
+        if algorithm['acronym'] == 'NB':
+            continue
         best_model = output_df[output_df['algorithm']==algorithm['acronym']].\
             sort_values(by=[f'mean_{metric}', f'std_{metric}'], ascending=False).head(1)
         train_data_file = best_model['train_data_file'].values[0]
