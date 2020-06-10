@@ -22,11 +22,14 @@ lemmatizer = WordNetLemmatizer()
 analyzer = SentimentIntensityAnalyzer()
 
 
-def clean_sentence(sentence):
+def clean_sentence(sentence, remove_puntuactions=True):
     # Remove HTML tags
     text = BeautifulSoup(sentence, "html.parser").get_text()    
     # Remove non alphabetic characters
-    text = re.sub(r"[^a-zA-Z]", " ", text)
+    if remove_puntuactions:
+        text = re.sub(r"[^a-zA-Z]", " ", text)
+    else:
+        text = re.sub(r"[^a-zA-Z,;-]", " ", text)
     # Remove leading and trailing spaces
     text = text.strip()
     # Remove extra spaces
