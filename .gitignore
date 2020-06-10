@@ -129,3 +129,7 @@ dmypy.json
 .pyre/
 
 cache
+
+data/docs
+
+test_pdf2text
