@@ -11,7 +11,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from utils import save_model
+from utils import save_model, get_features_and_labels, plot_learning_curve
 
 
 @click.group()
@@ -138,6 +138,7 @@ def do_train_model(algorithm_acronym, train_data_file, algorithm_name, num_split
                                          int(num_iter), kfold, metric, -1, 1)
     save_model(best_model, f'best_{algorithm_name}_{metric}', algorithm_acronym, 
                metric, train_data_file)
+    return best_model
 
 
 def get_classifier(algorithm_name, random_state):
@@ -175,6 +176,7 @@ def train_models(num_splits, num_iter, metric):
         {'name': 'gradient-boosting', 'acronym': 'GB'}
     ]
     # Train models
+    print('Training models')
     kfold = KFold(n_splits=num_splits, shuffle=True, random_state=random_state)
     files = glob.glob(data_path)            
     for file in files:
@@ -196,7 +198,8 @@ def train_models(num_splits, num_iter, metric):
                     'metric_scores': scores,
                 }
             )
-    # Save results as dataframe
+    # Save results in a dataframe
+    print('Saving experiment results in a dataframe')
     output_df = pd.DataFrame(columns=['algorithm', 'train_data_file', f'mean_{metric}'])
     for output in outputs:
         row = {
@@ -206,21 +209,28 @@ def train_models(num_splits, num_iter, metric):
             f'std_{metric}': round(output['metric_scores'].std(), 2)
         }
         output_df = output_df.append(row, ignore_index=True)    
-    # Save dataframe
+    # Save dataframe    
     experiment_dir = 'experiments'
     os.makedirs(experiment_dir, exist_ok=True)
     experiment_filename = 'e_{}.csv'.format(datetime.now().strftime('%d%m%Y_%H%M%S'))
-    output_df.to_csv(os.path.join(experiment_dir,experiment_filename), index=False)
+    experiment_file_path = os.path.join(experiment_dir,experiment_filename)
+    print(f'Saving experiment results in {experiment_file_path}')
+    output_df.to_csv(experiment_file_path, index=False)
     # Train algorithms on data transformation that work best for each of them
+    print('Doing hyperparametrization')
     for algorithm in algorithms:
         if algorithm['acronym'] == 'NB':
             continue
         best_model = output_df[output_df['algorithm']==algorithm['acronym']].\
             sort_values(by=[f'mean_{metric}', f'std_{metric}'], ascending=False).head(1)
         train_data_file = best_model['train_data_file'].values[0]
-        do_train_model(algorithm['acronym'], train_data_file, algorithm['name'], 
-                       num_splits, num_iter, metric)
-
+        best_model = do_train_model(algorithm['acronym'], train_data_file, algorithm['name'], 
+                                    num_splits, num_iter, metric)
+        features, labels = get_features_and_labels(train_data_file)
+        plot_learning_curve(best_model, f"{algorithm['acronym']} learning curves", 
+                            features, labels, metric, cv=kfold, shuffle=True, 
+                            save_fig=True)
+        
 
 if __name__ == "__main__":
     run()
