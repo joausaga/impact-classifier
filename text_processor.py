@@ -1,4 +1,5 @@
 import nltk
+import re
 
 from nltk import pos_tag
 from nltk.corpus import stopwords
@@ -6,6 +7,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from nltk.stem.porter import *
 
+from nltk import pos_tag
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from bs4 import BeautifulSoup
@@ -22,9 +24,20 @@ lemmatizer = WordNetLemmatizer()
 analyzer = SentimentIntensityAnalyzer()
 
 
-def clean_sentence(sentence, remove_puntuactions=True):
-    # Remove HTML tags
-    text = BeautifulSoup(sentence, "html.parser").get_text()    
+def fix_latin_abbreviations(text):
+    # Remove dot after 'et al.', 'e.g.', 'i.e.', 'a.o.', and 'w.r.t.' to avoid 
+    # the sentence tokenizer to start a new sentence after these abbreviations
+    text = text.replace('et al.', 'et al').replace('e.g.', 'e.g').\
+        replace('i.e.', 'i.e').replace('a.o.', 'a.o').replace('w.r.t.', 'w.r.t')
+    return text
+
+
+def clean_sentence(sentence, remove_puntuactions=True, remove_html_tags=False):
+    if remove_html_tags:
+        # Remove HTML tags
+        text = BeautifulSoup(sentence, "html.parser").get_text()    
+    # Remove URLs
+    text = re.sub(r'''(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))''', '', sentence)
     # Remove non alphabetic characters
     if remove_puntuactions:
         text = re.sub(r"[^a-zA-Z]", " ", text)
@@ -104,3 +117,21 @@ def count_pos_tag(sentence, tag):
 def analyze_sentiment(sentence):
     score = analyzer.polarity_scores(sentence)
     return score['compound']
+
+
+def is_valid_sentence(sentence):
+    """
+    Check whether the given sentence is grammatically complete. For the purpose 
+    of this project, sentences are considered complete if they have at least two 
+    nouns (subject, object) and a verb.
+    """
+    sentence_pos_tags = pos_tag(word_tokenize(sentence))
+    num_nouns, num_verb = 2, 1
+    nouns_counter, verbs_counter = 0, 0
+    for s_pos_tag in sentence_pos_tags:
+        s_tag = s_pos_tag[1]
+        if s_tag[:2] == 'NN':
+            nouns_counter += 1
+        if s_tag[:2] == 'VB':
+            verbs_counter += 1
+    return nouns_counter >= num_nouns and verbs_counter >= num_verb
