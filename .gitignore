@@ -133,3 +133,5 @@ cache
 data/docs
 
 test_pdf2text
+
+settings.json
