@@ -1,5 +1,5 @@
 {
     "model_dir": "models",
-    "model_name": "support-vector-machine.joblib",
+    "model_name": "logistic-regression-recall.joblib",
     "data_dir": "data"
 }
