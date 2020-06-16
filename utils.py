@@ -90,13 +90,22 @@ def lemmatize_words(words, pos='v'):
     return lemmas
 
 
-def save_model(model, algorithm_name, algorithm_acronym, metric, data_filename):
+def save_model(model, name, data_filename):
     models_dir = 'models'  # directory to store models
     os.makedirs(models_dir, exist_ok=True)  # ensure the directory exists
-    data_fn = data_filename.split('/')[-1]    
-    model_name = f'{algorithm_name}.joblib'
+    data_fn = data_filename.split('/')[-1]
+    with open(os.path.join(data_dir, 'train', data_fn), 'rb') as f:
+        data = joblib.load(f)
+    transformation = {
+        'type': data['transformation'],
+        'max_features': data['max_features'],
+        'ngram_range': data['ngram_range'],
+        'vocabulary': data['vocabulary'],
+        'file_name': data_fn
+    }
+    model_name = f'{name}.joblib'
     model_file_name = os.path.join(models_dir, model_name)
-    model_dict = dict(model=model, data_fn=data_fn)
+    model_dict = dict(model=model, transformation=transformation)
     joblib.dump(model_dict, model_file_name)
 
 
