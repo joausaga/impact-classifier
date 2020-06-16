@@ -90,7 +90,7 @@ def lemmatize_words(words, pos='v'):
     return lemmas
 
 
-def save_model(model, name, data_filename):
+def save_model(model, name, data_dir, data_filename):
     models_dir = 'models'  # directory to store models
     os.makedirs(models_dir, exist_ok=True)  # ensure the directory exists
     data_fn = data_filename.split('/')[-1]
