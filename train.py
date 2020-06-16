@@ -136,8 +136,7 @@ def do_train_model(algorithm_acronym, train_data_file, algorithm_name, num_split
         raise Exception(f'Unknown algorithm acronym: {algorithm_acronym}')
     best_model = do_hyperparametrization(classifier, param_grid, X_train, y_train, 
                                          int(num_iter), kfold, metric, -1, 1)
-    save_model(best_model, f'best_{algorithm_name}_{metric}', algorithm_acronym, 
-               metric, train_data_file)
+    save_model(best_model, f'best_{algorithm_name}_{metric}', train_data_file)
     return best_model
 
 
