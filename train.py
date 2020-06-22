@@ -8,7 +8,7 @@ import sys
 
 from datetime import datetime
 from sklearn.model_selection import KFold, RandomizedSearchCV, cross_val_score
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
@@ -159,7 +159,7 @@ def do_train_model(algorithm_acronym, train_data_file, algorithm_name, num_split
 
 def get_classifier(algorithm_name, random_state):
     if algorithm_name == 'NB':
-        classifier = MultinomialNB()
+        classifier = GaussianNB()
     elif algorithm_name == 'SVM':
         classifier = SVC(random_state=random_state)   
     elif algorithm_name == 'LR':
