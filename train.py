@@ -194,7 +194,7 @@ def train_models(num_splits, num_iter, metric):
     print('Training models')
     kfold = KFold(n_splits=num_splits, shuffle=True, random_state=random_state)
     files = glob.glob(data_path)
-    num_files = len([name for name in os.listdir(data_path if os.path.isfile(name)])
+    num_files = len([name for name in os.listdir(data_path) if os.path.isfile(name)])
     num_loops = num_files * len(algorithms)
     with tqdm(total=num_loops, file=sys.stdout) as pbar:
         for file in files:
