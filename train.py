@@ -182,7 +182,8 @@ def get_classifier(algorithm_name, random_state):
 def train_models(num_splits, num_iter, metric):
     random_state = np.random.RandomState(1234)
     outputs = []
-    data_path = os.path.join('data', 'train', '*.pkl')    
+    data_dir = os.path.join('data', 'train')
+    train_files = os.path.join(data_dir, '*.pkl')    
     algorithms = [
         {'name': 'naive-bayes', 'acronym': 'NB'},
         {'name': 'support-vector-machine', 'acronym': 'SVM'},
@@ -193,8 +194,8 @@ def train_models(num_splits, num_iter, metric):
     # Train models
     print('Training models')
     kfold = KFold(n_splits=num_splits, shuffle=True, random_state=random_state)
-    files = glob.glob(data_path)
-    num_files = len([name for name in os.listdir(data_path) if os.path.isfile(name)])
+    files = glob.glob(train_files)
+    num_files = len([name for name in os.listdir(data_dir) if os.path.isfile(name)])
     num_loops = num_files * len(algorithms)
     with tqdm(total=num_loops, file=sys.stdout) as pbar:
         for file in files:
