@@ -7,7 +7,7 @@ import os
 
 from datetime import datetime
 from sklearn.model_selection import KFold, RandomizedSearchCV, cross_val_score
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
@@ -19,9 +19,14 @@ def run():
     pass
 
 
-# Inspired by
-# https://www.kaggle.com/yassineghouzam/titanic-top-4-with-ensemble-modeling/notebook#Titanic-Top-4%-with-ensemble-modeling
 def define_parameters_gb():
+    """
+    Define hyper-parameters of
+    Gradient Boosting
+
+    Inspired by
+    https://www.kaggle.com/yassineghouzam/titanic-top-4-with-ensemble-modeling/notebook#Titanic-Top-4%-with-ensemble-modeling
+    """
     n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=10)]
     max_features = ['auto', 'sqrt']
     max_depth = [int(x) for x in np.linspace(10, 100, num = 10)]
@@ -60,9 +65,14 @@ def define_parameters_rf():
     return param_grid
 
 
-# Inspired by
-# https://chrisalbon.com/machine_learning/model_selection/hyperparameter_tuning_using_grid_search
 def define_parameters_lr():
+    """
+    Define hyper-parameters of
+    Logistic Regression.
+
+    Inspired by
+    https://chrisalbon.com/machine_learning/model_selection/hyperparameter_tuning_using_grid_search
+    """
     param_grid = {
         'penalty': ['l1', 'l2'],
         'C': np.logspace(0, 4, 10)
@@ -70,9 +80,14 @@ def define_parameters_lr():
     return param_grid
 
 
-# Ideas taken from 
-# https://towardsdatascience.com/svm-hyper-parameter-tuning-using-gridsearchcv-49c0bc55ce29
 def define_parameters_svm():
+    """
+    Define hyper-parameters of
+    Support Vector Machine.
+
+    Inspired by
+    https://towardsdatascience.com/svm-hyper-parameter-tuning-using-gridsearchcv-49c0bc55ce29
+    """
     param_grid = {
         'C': [0.01, 0.1, 1, 10, 100],
         'gamma': [1, 0.1, 0.01, 0.001, 'scale'],
@@ -142,7 +157,7 @@ def do_train_model(algorithm_acronym, train_data_file, algorithm_name, num_split
 
 def get_classifier(algorithm_name, random_state):
     if algorithm_name == 'NB':
-        classifier = GaussianNB()
+        classifier = MultinomialNB()
     elif algorithm_name == 'SVM':
         classifier = SVC(random_state=random_state)   
     elif algorithm_name == 'LR':
@@ -186,7 +201,8 @@ def train_models(num_splits, num_iter, metric):
         text_features = list(train_data.iloc[:,0].values)        
         extra_features = np.array(train_data.iloc[:,2:].values)
         X_train = np.concatenate((text_features, extra_features), axis=1)
-        for algorithm in algorithms:            
+        for algorithm in algorithms:
+            print('Training {}'.format(algorithm))          
             classifier = get_classifier(algorithm['acronym'], random_state)                
             scores = cross_val_score(classifier, X_train, y=y_train, 
                                      scoring=metric, cv=kfold, n_jobs=-1)
@@ -197,8 +213,8 @@ def train_models(num_splits, num_iter, metric):
                     'metric_scores': scores,
                 }
             )
-    # Save results in a dataframe
-    print('Saving experiment results in a dataframe')
+    # Load results in a dataframe
+    print('Loading experiment results in a dataframe')
     output_df = pd.DataFrame(columns=['algorithm', 'train_data_file', f'mean_{metric}'])
     for output in outputs:
         row = {
@@ -218,6 +234,7 @@ def train_models(num_splits, num_iter, metric):
     # Train algorithms on data transformation that work best for each of them
     print('Doing hyperparametrization')
     for algorithm in algorithms:
+        print('Algorithm: {}'.format(algorithm))
         if algorithm['acronym'] == 'NB':
             continue
         best_model = output_df[output_df['algorithm']==algorithm['acronym']].\
