@@ -11,6 +11,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from tqdm import tqdm
 from utils import save_model, get_features_and_labels, plot_learning_curve
 
 
@@ -192,27 +193,30 @@ def train_models(num_splits, num_iter, metric):
     # Train models
     print('Training models')
     kfold = KFold(n_splits=num_splits, shuffle=True, random_state=random_state)
-    files = glob.glob(data_path)            
-    for file in files:
-        with open(file, 'rb') as f:
-            data = joblib.load(f)
-        train_data = data['data']
-        y_train = train_data['label'].values
-        text_features = list(train_data.iloc[:,0].values)        
-        extra_features = np.array(train_data.iloc[:,2:].values)
-        X_train = np.concatenate((text_features, extra_features), axis=1)
-        for algorithm in algorithms:
-            print('Training {}'.format(algorithm))          
-            classifier = get_classifier(algorithm['acronym'], random_state)                
-            scores = cross_val_score(classifier, X_train, y=y_train, 
-                                     scoring=metric, cv=kfold, n_jobs=-1)
-            outputs.append(
-                {
-                    'algorithm': algorithm['acronym'],
-                    'train_filename': file,                
-                    'metric_scores': scores,
-                }
-            )
+    files = glob.glob(data_path)
+    num_files = len([name for name in os.listdir(data_path if os.path.isfile(name)])
+    num_loops = num_files * len(algorithms)
+    with tqdm(total=num_loops, file=sys.stdout) as pbar:
+        for file in files:
+            with open(file, 'rb') as f:
+                data = joblib.load(f)
+            train_data = data['data']
+            y_train = train_data['label'].values
+            text_features = list(train_data.iloc[:,0].values)        
+            extra_features = np.array(train_data.iloc[:,2:].values)
+            X_train = np.concatenate((text_features, extra_features), axis=1)
+            for algorithm in algorithms:  
+                classifier = get_classifier(algorithm['acronym'], random_state)                
+                scores = cross_val_score(classifier, X_train, y=y_train, 
+                                        scoring=metric, cv=kfold, n_jobs=-1)
+                outputs.append(
+                    {
+                        'algorithm': algorithm['acronym'],
+                        'train_filename': file,                
+                        'metric_scores': scores,
+                    }
+                )
+                pbar.update(1)
     # Load results in a dataframe
     print('Loading experiment results in a dataframe')
     output_df = pd.DataFrame(columns=['algorithm', 'train_data_file', f'mean_{metric}'])
@@ -233,20 +237,20 @@ def train_models(num_splits, num_iter, metric):
     output_df.to_csv(experiment_file_path, index=False)
     # Train algorithms on data transformation that work best for each of them
     print('Doing hyperparametrization')
-    for algorithm in algorithms:
-        print('Algorithm: {}'.format(algorithm))
-        if algorithm['acronym'] == 'NB':
-            continue
-        best_model = output_df[output_df['algorithm']==algorithm['acronym']].\
-            sort_values(by=[f'mean_{metric}', f'std_{metric}'], ascending=False).head(1)
-        train_data_file = best_model['train_data_file'].values[0]
-        best_model = do_train_model(algorithm['acronym'], train_data_file, algorithm['name'], 
-                                    num_splits, num_iter, metric)
-        features, labels = get_features_and_labels(train_data_file)
-        plot_learning_curve(best_model, f"{algorithm['acronym']} learning curves", 
-                            features, labels, metric, cv=kfold, shuffle=True, 
-                            save_fig=True)
-        
+    with tqdm(total=len(algorithms), file=sys.stdout) as pbar:
+        for algorithm in algorithms:            
+            if algorithm['acronym'] != 'NB':
+                best_model = output_df[output_df['algorithm']==algorithm['acronym']].\
+                    sort_values(by=[f'mean_{metric}', f'std_{metric}'], ascending=False).head(1)
+                train_data_file = best_model['train_data_file'].values[0]
+                best_model = do_train_model(algorithm['acronym'], train_data_file, algorithm['name'], 
+                                            num_splits, num_iter, metric)
+                features, labels = get_features_and_labels(train_data_file)
+                plot_learning_curve(best_model, f"{algorithm['acronym']} learning curves", 
+                                    features, labels, metric, cv=kfold, shuffle=True, 
+                                    save_fig=True)
+            pbar.update(1)
+
 
 if __name__ == "__main__":
     run()
