@@ -62,10 +62,11 @@ def sentence_to_words(sentence, context_words=[], lemmatization=False):
     words = word_tokenize(sentence)
     # Remove stopwords and put words to lowercase
     words = [word.lower() for word in words if word.lower() not in stop_words and len(word) > 1]
-    # Apply steeming
-    words = [stemmer.stem(word) for word in words]
-    
-    if lemmatization:
+    if not lemmatization:
+        # Apply steeming
+        words = [stemmer.stem(word) for word in words]
+    else:
+        # Apply lemmatization
         words = [lemmatizer.lemmatize(word) for word in words]
     
     return words
