@@ -1,4 +1,3 @@
-
 from nltk.tokenize import sent_tokenize
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from text_processor import sentence_to_words, count_pos_tag, analyze_sentiment, \
@@ -16,7 +15,7 @@ import pdftotext
 import streamlit as st
 
 
-def process_sentence(sentence, vectorizer, vectorizer_type):
+def process_sentence(sentence, vectorizer, vectorizer_type, lemmatization):
     dict_process = {
         'char_count': len(sentence),
         'word_count': len(sentence.split()),
@@ -34,18 +33,20 @@ def process_sentence(sentence, vectorizer, vectorizer_type):
     for _, v in dict_process.items():
         text_features.append(v)
     text_features_array = np.array([text_features])
-    sentence_words = sentence_to_words(sentence)
+    sentence_words = sentence_to_words(sentence, context_words=['reseach', 'uk'], 
+                                       lemmatization=lemmatization)
     if vectorizer_type == 'tc':
-        bag_of_words = vectorizer.transform([sentence_words]).toarray()
+        vec_features = vectorizer.transform([sentence_words]).toarray()
     elif vectorizer_type == 'tfidf':
-        bag_of_words = vectorizer.fit_transform([sentence_words]).toarray()
+        vec_features = vectorizer.fit_transform([sentence_words]).toarray()
     else:
         raise Exception(f'Unknown vectorizer {vectorizer_type}')
-    features = np.concatenate((text_features_array, bag_of_words), axis=1)
+    features = np.concatenate((vec_features, text_features_array), axis=1)
     return features
 
 
-def process_pdf(pdf_file, file_name, classifier, vectorizer, vectorizer_type):    
+def process_pdf(pdf_file, file_name, classifier, vectorizer, vectorizer_type, 
+                lemmatization):    
     pdf = fitz.open(stream=pdf_file, filetype='pdf')
     num_pages = pdf.pageCount
     impact_sentences = []
@@ -53,14 +54,14 @@ def process_pdf(pdf_file, file_name, classifier, vectorizer, vectorizer_type):
     for page_num in range(0, num_pages):
         page = pdf.loadPage(page_num)
         page_text = page.getText("text")
-        page_text = fix_latin_abbreviations(page_text)        
-        page_text = page_text.replace('\n', ' ').replace('\r', ' ')
+        page_text = fix_latin_abbreviations(page_text)
         raw_sentences = sent_tokenize(page_text)
         for raw_sentence in raw_sentences:
             clean_text = clean_sentence(raw_sentence)
             if is_valid_sentence(clean_text):
                 processed_sentence = process_sentence(clean_text, vectorizer, 
-                                                    vectorizer_type)            
+                                                      vectorizer_type, 
+                                                      lemmatization)            
                 prediction = classifier.predict(processed_sentence)
                 if prediction[0] == 1:                    
                     if len(impact_sentences) > 0:
@@ -74,7 +75,8 @@ def process_pdf(pdf_file, file_name, classifier, vectorizer, vectorizer_type):
                             {
                                 'File': file_name if file_name else 'file_name', 
                                 'Page': page_num+1, 
-                                'Sentence': clean_text}
+                                'Sentence': clean_text
+                            }
                         )                    
             p_bar.progress(round((page_num)/num_pages,0))
     num_impact_sentences = len(impact_sentences)
@@ -91,28 +93,31 @@ def init(model_dir, model_name, data_dir):
     model_dict = joblib.load(os.path.join(model_dir, model_name))
     classifier = model_dict['model']
     # Instantiate vectorizer
-    with open(os.path.join(data_dir, 'train', model_dict['data_fn']), 'rb') as f:
-        data = joblib.load(f)
-    if data['transformation'] == 'tc':
-        vectorizer = CountVectorizer(max_features=int(data['max_features']),
-                                     ngram_range=data['ngram_range'],
-                                     vocabulary=data['vocabulary'],
+    transformation = model_dict['transformation']
+    if transformation['type'] == 'tc':
+        vectorizer = CountVectorizer(max_features=int(transformation['max_features']),
+                                     ngram_range=transformation['ngram_range'],
+                                     vocabulary=transformation['vocabulary'],
                                      preprocessor=lambda x: x, tokenizer=lambda x: x,
                                      lowercase=False, analyzer='word',
                                      token_pattern=r'\w{1,}')
-    elif data['transformation'] == 'tfidf':
-        vectorizer = TfidfVectorizer(max_features=int(data['max_features']), 
-                                     ngram_range=data['ngram_range'],
-                                     vocabulary=data['vocabulary'],
+    elif transformation['type'] == 'tfidf':
+        vectorizer = TfidfVectorizer(max_features=int(transformation['max_features']), 
+                                     ngram_range=transformation['ngram_range'],
+                                     vocabulary=transformation['vocabulary'],
                                      preprocessor=lambda x: x, 
                                      tokenizer=lambda x: x,
                                      lowercase=False, analyzer='word', 
                                      token_pattern=r'\w{1,}')
     else:
-        msg = 'Unknown transformation: {}'.format(data['transformation'])
+        msg = 'Unknown transformation: {}'.format(transformation['type'])
         raise Exception(msg)
+    if 'lemmatization' in transformation['file_name']:
+        lemmatization = True
+    else:
+        lemmatization = False
 
-    return classifier, vectorizer, data['transformation']
+    return classifier, vectorizer, transformation['type'], lemmatization
 
 
 def main():
@@ -121,8 +126,8 @@ def main():
     model_name = app_config['model_name']
     data_dir = app_config['data_dir']
 
-    classifier, vectorizer, vectorizer_type = init(model_dir, model_name, 
-                                                   data_dir)
+    classifier, vectorizer, vectorizer_type, lemmatization = \
+        init(model_dir, model_name, data_dir)
     st.title('Impact Classifier')
     st.write("""
     Impact Classifier is a machine-learning-based document classifier that
@@ -130,7 +135,8 @@ def main():
     """)
     uploaded_file = st.file_uploader('Select PDF documents to analyze', type='pdf')
     if uploaded_file is not None:
-        process_pdf(uploaded_file, '', classifier, vectorizer, vectorizer_type)
+        process_pdf(uploaded_file, '', classifier, vectorizer, vectorizer_type, 
+                    lemmatization)
 
 
 if __name__ == "__main__":
