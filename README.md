@@ -47,6 +47,8 @@ The classifier was implemented in a web application using the open-source app fr
 ![Screeshot](figures/tool_screenshot2.png)
 
 
+A further and detailed discussion about the implementation of the model is available at `report/Project Report-Machine Learning Engineer.pdf`.
+
 
 
 
