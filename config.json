@@ -1,5 +1,5 @@
 {
     "model_dir": "models",
-    "model_name": "logistic-regression-recall.joblib",
+    "model_name": "logistic-regression-classifier.joblib",
     "data_dir": "data"
 }
