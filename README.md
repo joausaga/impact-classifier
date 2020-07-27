@@ -42,7 +42,7 @@ In the process of building the model, five algorithms have been trained. In this
 
 ## Implementation
 
-The classifier was implemented in a web application using the open-source app framework [Stremlit](https://www.streamlit.io/). The application allows users to upload research documents in PDF format. After examining the uploaded document page by page and sentence by sentence, it reports the number of potential evidence of social impact found in the document, as shown in the picture below. The report informs the page where the evidence was found as well as the sentence that contains the proof.
+The classifier was implemented in a web application using the open-source app framework [Streamlit](https://www.streamlit.io/). The application allows users to upload research documents in PDF format. After examining the uploaded document page by page and sentence by sentence, it reports the number of potential evidence of social impact found in the document, as shown in the picture below. The report informs the page where the evidence was found as well as the sentence that contains the proof.
 
 ![Screeshot](figures/tool_screenshot2.png)
 
