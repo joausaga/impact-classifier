@@ -210,7 +210,7 @@ def train_models(num_splits, num_iter, metric):
             for algorithm in algorithms:  
                 classifier = get_classifier(algorithm['acronym'], random_state)                
                 scores = cross_val_score(classifier, X_train, y=y_train, 
-                                        scoring=metric, cv=kfold, n_jobs=-1)
+                                         scoring=metric, cv=kfold, n_jobs=-1)
                 outputs.append(
                     {
                         'algorithm': algorithm['acronym'],
