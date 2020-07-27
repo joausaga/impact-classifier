@@ -130,7 +130,8 @@ dmypy.json
 
 cache
 
-data/docs
+data/docs/inb
+data/docs/sior
 
 test_pdf2text
 
