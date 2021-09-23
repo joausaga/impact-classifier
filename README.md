@@ -7,7 +7,7 @@ The proposal aims to solve a classification problem in which the model takes a s
 
 ## Case Study
 
-From all research fields, the project focuses on Medical, Health, and Biological science because the plan is to deploy the solution in the Spanish National Institue of Bioinformatics (INB by its Spanish Acronym) to understanding the social impact of their research projects. INB is an institution that conducts medical and biological investigations.
+From all research fields, the project focuses on Medical, Health, and Biological science because the plan is to deploy the solution at the Spanish National Institue of Bioinformatics (INB by its Spanish Acronym) to understanding the social impact of their research projects. INB is an institution that conducts medical and biological investigations.
 
 ## Dataset
 
