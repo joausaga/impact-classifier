@@ -1,6 +1,6 @@
 # Impact Classifier
 
-Impact classifier is a project that proposes to leverage machine learning (ML) and natural language processing (NLP) techniques to build a text classifier that facilitate the identification of evidence of social impact in research documents. 
+Impact classifier is a project that proposes to leverage machine learning (ML) and natural language processing (NLP) techniques to build a text classifier that facilitates the identification of evidence of social impact in research documents. 
 
 The proposal aims to solve a classification problem in which the model takes a sentence as input and produces as output a binary answer (1=True, 0=False) that states whether the sentence contains or not evidence of social impact.
 
