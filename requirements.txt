@@ -122,7 +122,7 @@ tqdm==4.46.0
 traitlets==4.3.3
 typed-ast==1.4.1
 tzlocal==2.1
-ujson==1.35
+ujson==5.2.0
 urllib3==1.25.8
 vaderSentiment==3.2.1
 validators==0.15.0
